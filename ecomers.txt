@@ -1,0 +1,30 @@
+import pandas as pd
+
+orders = pd.read_csv("orders.csv")
+products = pd.read_csv("products.csv")
+customers = pd.read_csv("customers.csv")
+
+# Clean and Merge
+orders['order_date'] = pd.to_datetime(orders['order_date'])
+data = orders.merge(products, on="product_id", how="left")
+
+# Repeat Customers 
+repeat_customers = data.groupby("customer_id")['order_id'].nunique()
+repeat_customers = repeat_customers[repeat_customers >= 2]
+
+# {-Product Performance-}
+data['line_total'] = data['quantity'] * data['price']
+top_product = data.groupby("product_name")['quantity'].sum().idxmax()
+least_product = data.groupby("product_name")['quantity'].sum().idxmin()
+
+# Reports
+total_income = data['line_total'].sum()
+yearly = data.groupby(data['order_date'].dt.year)['line_total'].sum()
+monthly = data.groupby(data['order_date'].dt.to_period('M'))['line_total'].sum()
+
+print("Repeat Customers:", repeat_customers.count())
+print("Top Product:", top_product)
+print("Least Product:", least_product)
+print("Total Income:", total_income)
+print("Yearly Report:\n", yearly)
+print("Monthly Report:\n", monthly)
